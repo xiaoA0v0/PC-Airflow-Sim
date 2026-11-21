@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PC-Airflow-Sim | 纯前端 PC 机箱风道与散热物理可视化模拟器</title>
+  <style>
+    :root {
+      --bg-base: #070b14;
+      --bg-panel: #0d1424;
+      --bg-card: #121c31;
+      --border: rgba(148, 163, 184, 0.16);
+      --border-strong: rgba(56, 189, 248, 0.35);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #38bdf8;
+      --accent-cyan: #22d3ee;
+      --accent-green: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+      --accent-purple: #a78bfa;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at 20% 0%, #101b33 0%, var(--bg-base) 55%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(13, 20, 36, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.35);
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-title h1 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .brand-title p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .top-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .badge strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(320px, 410px);
+      gap: 18px;
+      padding: 18px 22px 24px;
+      max-width: 1580px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 1080px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stage-panel {
+      background: linear-gradient(180deg, rgba(18, 28, 49, 0.72), rgba(11, 17, 32, 0.9));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .stage-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 2px 4px;
+    }
+
+    .stage-hint {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stage-hint kbd {
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent-blue);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: inherit;
+    }
+
+    .toggle-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill-btn {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 5px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    .pill-btn:hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+
+    .pill-btn.active {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: rgba(56, 189, 248, 0.55);
+      color: #e0f2fe;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 11;
+      min-height: 430px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: radial-gradient(circle at 52% 48%, #0e182d 0%, #060a13 100%);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    #simCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: pointer;
+    }
+
+    .legend-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(11, 18, 32, 0.85);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .temp-scale {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .scale-gradient {
+      width: 150px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #38bdf8 0%, #34d399 34%, #fbbf24 68%, #f97316 86%, #ef4444 100%);
+    }
+
+    .fan-legend {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .fan-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .fan-tag i {
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 15px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.2px;
+    }
+
+    .card-header span.sub {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .preset-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 10px;
+      text-align: left;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: all 0.16s ease;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+    }
+
+    .preset-btn.active {
+      background: rgba(56, 189, 248, 0.14);
+      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.15);
+    }
+
+    .preset-btn .name {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+
+    .preset-btn .desc {
+      display: block;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 10px 12px;
+    }
+
+    .metric-label {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-val {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 4px 0 6px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.5px;
+    }
+
+    .bar-track {
+      height: 5px;
+      width: 100%;
+      background: rgba(148, 163, 184, 0.15);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 40%;
+      border-radius: 999px;
+      transition: width 0.25s ease, background-color 0.25s ease;
+    }
+
+    .throttle-pill {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      display: none;
+    }
+
+    .throttle-pill.show {
+      display: inline-block;
+    }
+
+    #chartCanvas {
+      width: 100%;
+      height: 92px;
+      display: block;
+      border-radius: 8px;
+      background: rgba(7, 11, 20, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .pressure-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .pressure-stats {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pressure-stats strong {
+      color: var(--text-primary);
+    }
+
+    .pressure-verdict {
+      font-size: 12px;
+      padding-top: 4px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.16);
+      color: var(--accent-green);
+    }
+
+    .load-pills {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .control-top strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.22);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+      border: 2px solid #0b1220;
+      transition: transform 0.12s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.16);
+    }
+
+    footer {
+      text-align: center;
+      padding: 10px 16px 18px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">AF</div>
+      <div class="brand-title">
+        <h1>PC-Airflow-Sim</h1>
+        <p>纯前端 PC 机箱风道流体与散热热力场实时可视化模拟器</p>
+      </div>
+    </div>
+    <div class="top-badges">
+      <div class="badge"><span class="dot" id="pressureDot"></span>风道状态：<strong id="topPressure">微正压</strong></div>
+      <div class="badge">净风量：<strong id="topCfm">+55 CFM</strong></div>
+      <div class="badge">估算噪音：<strong id="topNoise">31.4 dBA</strong></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage-panel">
+      <div class="stage-toolbar">
+        <div class="stage-hint">
+          <kbd>点击机箱风扇</kbd>
+          <span>实时切换 进风 (IN) / 排风 (OUT) / 关闭 (OFF)</span>
+        </div>
+        <div class="toggle-group">
+          <button class="pill-btn active" id="btnHeatmap">热力场</button>
+          <button class="pill-btn active" id="btnTrails">流线尾迹</button>
+          <button class="pill-btn active" id="btnArrows">风向箭头</button>
+          <button class="pill-btn" id="btnPause">暂停</button>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="simCanvas"></canvas>
+      </div>
+
+      <div class="legend-bar">
+        <div class="temp-scale">
+          <span>25°C</span>
+          <div class="scale-gradient"></div>
+          <span>95°C+</span>
+        </div>
+        <div class="fan-legend">
+          <span class="fan-tag"><i style="background:#38bdf8"></i>进风 IN</span>
+          <span class="fan-tag"><i style="background:#fb923c"></i>排风 OUT</span>
+          <span class="fan-tag"><i style="background:#475569"></i>停转 OFF</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="sidebar">
+      <div class="card">
+        <div class="card-header">
+          <span>实时核心热力学遥测</span>
+          <span class="sub">动态散热均衡模型</span>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-box">
+            <div class="metric-label">
+              <span>CPU 封装温度</span>
+              <span class="throttle-pill" id="cpuThrottle">过热降频</span>
+            </div>
+            <div class="metric-val" id="cpuTempVal">61.2°C</div>
+            <div class="bar-track"><div class="bar-fill" id="cpuTempBar"></div></div>
+          </div>
+
+          <div class="metric-box">
+            <div class="metric-label">
+              <span>GPU 核心温度</span>
+              <span class="throttle-pill" id="gpuThrottle">高温预警</span>
+            </div>
+            <div class="metric-val" id="gpuTempVal">65.8°C</div>
+            <div class="bar-track"><div class="bar-fill" id="gpuTempBar"></div></div>
+          </div>
+        </div>
+
+        <canvas id="chartCanvas" width="360" height="92"></canvas>
+
+        <div class="pressure-box">
+          <div class="pressure-stats">
+            <span>总进风：<strong id="intakeCfmVal">0 CFM</strong></span>
+            <span>总排风：<strong id="exhaustCfmVal">0 CFM</strong></span>
+            <span>机箱内温：<strong id="caseTempVal">32.0°C</strong></span>
+          </div>
+          <div class="pressure-verdict" id="pressureVerdict">
+            微正压风道：散热与防尘兼顾，缝隙不易吸入灰尘。
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>风道方案预设</span>
+          <span class="sub">一键对比常见装机布局</span>
+        </div>
+        <div class="preset-grid" id="presetGrid">
+          <button class="preset-btn active" data-preset="positive">
+            <span class="name">经典微正压</span>
+            <span class="desc">前3进 · 后1出 · 顶后1出</span>
+          </button>
+          <button class="preset-btn" data-preset="maxflow">
+            <span class="name">满载强穿透</span>
+            <span class="desc">前3进 · 顶2出 · 后1出</span>
+          </button>
+          <button class="preset-btn" data-preset="negative">
+            <span class="name">负压抽风式</span>
+            <span class="desc">前1进 · 顶2出 · 后1出</span>
+          </button>
+          <button class="preset-btn" data-preset="hotbox">
+            <span class="name">闷罐无进风</span>
+            <span class="desc">仅后1出 · 观察积热飙升</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>硬件功耗与风扇调校</span>
+          <span class="sub">拖动实时观测流场变化</span>
+        </div>
+
+        <div class="load-pills">
+          <button class="pill-btn" data-load="idle">待机桌面</button>
+          <button class="pill-btn active" data-load="gaming">3A 游戏</button>
+          <button class="pill-btn" data-load="burn">双烤极限</button>
+        </div>
+
+        <div class="control-item">
+          <div class="control-top">
+            <span>CPU 功耗 (TDP)</span>
+            <strong id="cpuTdpLabel">125 W</strong>
+          </div>
+          <input type="range" id="cpuTdpRange" min="35" max="280" step="5" value="125" />
+        </div>
+
+        <div class="control-item">
+          <div class="control-top">
+            <span>GPU 功耗 (TGP)</span>
+            <strong id="gpuTdpLabel">240 W</strong>
+          </div>
+          <input type="range" id="gpuTdpRange" min="30" max="450" step="10" value="240" />
+        </div>
+
+        <div class="control-item">
+          <div class="control-top">
+            <span>全局风扇 PWM 转速</span>
+            <strong id="fanPwmLabel">60% (1260 RPM)</strong>
+          </div>
+          <input type="range" id="fanPwmRange" min="20" max="100" step="2" value="60" />
+        </div>
+
+        <div class="control-item">
+          <div class="control-top">
+            <span>室内环境温度</span>
+            <strong id="ambientLabel">24°C</strong>
+          </div>
+          <input type="range" id="ambientRange" min="16" max="36" step="1" value="24" />
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    PC-Airflow-Sim · 纯原生 HTML5 Canvas 物理流场与热力学示意模型 · 单文件零依赖
+  </footer>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById("simCanvas");
+      const ctx = canvas.getContext("2d");
+      const chartCanvas = document.getElementById("chartCanvas");
+      const chartCtx = chartCanvas.getContext("2d");
+
+      // Logical coordinate space (800 x 550)
+      const W = 800;
+      const H = 550;
+
+      // Case chassis bounds in logical coordinates
+      const CASE = { x: 105, y: 60, w: 590, h: 430 };
+      const PSU_SHROUD = { x: CASE.x + 2, y: CASE.y + CASE.h - 92, w: CASE.w - 4, h: 90 };
+      const MOBO = { x: CASE.x + 48, y: CASE.y + 42, w: 340, h: 280 };
+      const CPU_BLOCK = { x: CASE.x + 178, y: CASE.y + 102, w: 86, h: 92 };
+      const GPU_CARD = { x: CASE.x + 76, y: CASE.y + 236, w: 325, h: 52 };
+      const RAM_SLOTS = { x: CASE.x + 286, y: CASE.y + 98, w: 36, h: 96 };
+
+      // Six 120mm fan slots around the case
+      // mode: 'in' | 'out' | 'off'
+      const fans = [
+        { id: "front-top", label: "前上", side: "front", x: CASE.x + CASE.w - 18, y: CASE.y + 72, w: 22, h: 86, mode: "in", angle: 0 },
+        { id: "front-mid", label: "前中", side: "front", x: CASE.x + CASE.w - 18, y: CASE.y + 172, w: 22, h: 86, mode: "in", angle: 0.7 },
+        { id: "front-bot", label: "前下", side: "front", x: CASE.x + CASE.w - 18, y: CASE.y + 272, w: 22, h: 86, mode: "in", angle: 1.4 },
+        { id: "rear", label: "后部", side: "rear", x: CASE.x - 4, y: CASE.y + 94, w: 22, h: 86, mode: "out", angle: 0.3 },
+        { id: "top-rear", label: "顶后", side: "top", x: CASE.x + 150, y: CASE.y - 4, w: 86, h: 22, mode: "out", angle: 1.1 },
+        { id: "top-front", label: "顶前", side: "top", x: CASE.x + 280, y: CASE.y - 4, w: 86, h: 22, mode: "off", angle: 2.0 }
+      ];
+
+      const PRESETS = {
+        positive: {
+          modes: { "front-top": "in", "front-mid": "in", "front-bot": "in", "rear": "out", "top-rear": "out", "top-front": "off" },
+          pwm: 60
+        },
+        maxflow: {
+          modes: { "front-top": "in", "front-mid": "in", "front-bot": "in", "rear": "out", "top-rear": "out", "top-front": "out" },
+          pwm: 84
+        },
+        negative: {
+          modes: { "front-top": "off", "front-mid": "in", "front-bot": "off", "rear": "out", "top-rear": "out", "top-front": "out" },
+          pwm: 68
+        },
+        hotbox: {
+          modes: { "front-top": "off", "front-mid": "off", "front-bot": "off", "rear": "out", "top-rear": "off", "top-front": "off" },
+          pwm: 36
+        }
+      };
+
+      const LOADS = {
+        idle: { cpu: 45, gpu: 40 },
+        gaming: { cpu: 125, gpu: 240 },
+        burn: { cpu: 235, gpu: 410 }
+      };
+
+      const state = {
+        cpuTdp: 125,
+        gpuTdp: 240,
+        fanPwm: 60,
+        ambient: 24,
+        cpuTemp: 56,
+        gpuTemp: 60,
+        caseTemp: 31,
+        intakeCfm: 0,
+        exhaustCfm: 0,
+        noiseDba: 30,
+        showHeatmap: true,
+        showTrails: true,
+        showArrows: true,
+        paused: false,
+        hoveredFanId: null
+      };
+
+      const particles = [];
+      const MAX_PARTICLES = 560;
+      const historyCpu = new Array(80).fill(56);
+      const historyGpu = new Array(80).fill(60);
+      let chartTick = 0;
+
+      // UI references
+      const el = {
+        cpuTdpRange: document.getElementById("cpuTdpRange"),
+        gpuTdpRange: document.getElementById("gpuTdpRange"),
+        fanPwmRange: document.getElementById("fanPwmRange"),
+        ambientRange: document.getElementById("ambientRange"),
+        cpuTdpLabel: document.getElementById("cpuTdpLabel"),
+        gpuTdpLabel: document.getElementById("gpuTdpLabel"),
+        fanPwmLabel: document.getElementById("fanPwmLabel"),
+        ambientLabel: document.getElementById("ambientLabel"),
+        cpuTempVal: document.getElementById("cpuTempVal"),
+        gpuTempVal: document.getElementById("gpuTempVal"),
+        cpuTempBar: document.getElementById("cpuTempBar"),
+        gpuTempBar: document.getElementById("gpuTempBar"),
+        cpuThrottle: document.getElementById("cpuThrottle"),
+        gpuThrottle: document.getElementById("gpuThrottle"),
+        intakeCfmVal: document.getElementById("intakeCfmVal"),
+        exhaustCfmVal: document.getElementById("exhaustCfmVal"),
+        caseTempVal: document.getElementById("caseTempVal"),
+        pressureVerdict: document.getElementById("pressureVerdict"),
+        topPressure: document.getElementById("topPressure"),
+        topCfm: document.getElementById("topCfm"),
+        topNoise: document.getElementById("topNoise"),
+        pressureDot: document.getElementById("pressureDot"),
+        btnHeatmap: document.getElementById("btnHeatmap"),
+        btnTrails: document.getElementById("btnTrails"),
+        btnArrows: document.getElementById("btnArrows"),
+        btnPause: document.getElementById("btnPause")
+      };
+
+      function getFanVector(fan) {
+        if (fan.mode === "off") return { vx: 0, vy: 0 };
+        if (fan.side === "front") {
+          return fan.mode === "in" ? { vx: -1, vy: 0 } : { vx: 1, vy: 0 };
+        }
+        if (fan.side === "rear") {
+          return fan.mode === "in" ? { vx: 1, vy: 0 } : { vx: -1, vy: 0 };
+        }
+        // top
+        return fan.mode === "in" ? { vx: 0, vy: 1 } : { vx: 0, vy: -1 };
+      }
+
+      function tempToColor(temp, alpha = 1) {
+        const t = Math.max(0, Math.min(1, (temp - 24) / 68));
+        let r, g, b;
+        if (t < 0.33) {
+          const k = t / 0.33;
+          r = Math.round(56 + (52 - 56) * k);
+          g = Math.round(189 + (211 - 189) * k);
+          b = Math.round(248 + (153 - 248) * k);
+        } else if (t < 0.66) {
+          const k = (t - 0.33) / 0.33;
+          r = Math.round(52 + (251 - 52) * k);
+          g = Math.round(211 + (191 - 211) * k);
+          b = Math.round(153 + (36 - 153) * k);
+        } else {
+          const k = (t - 0.66) / 0.34;
+          r = Math.round(251 + (239 - 251) * k);
+          g = Math.round(191 + (68 - 191) * k);
+          b = Math.round(36 + (68 - 36) * k);
+        }
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
+
+      function spawnParticle(randomInside = false) {
+        const intakeFans = fans.filter((f) => f.mode === "in");
+        let x, y, vx, vy;
+        let isDustLeak = false;
+
+        if (randomInside) {
+          x = CASE.x + 26 + Math.random() * (CASE.w - 52);
+          y = CASE.y + 26 + Math.random() * (PSU_SHROUD.y - CASE.y - 36);
+          vx = (Math.random() - 0.5) * 0.6;
+          vy = (Math.random() - 0.5) * 0.6;
+        } else if (intakeFans.length > 0 && Math.random() > (state.exhaustCfm > state.intakeCfm + 15 ? 0.25 : 0.04)) {
+          const f = intakeFans[Math.floor(Math.random() * intakeFans.length)];
+          const dir = getFanVector(f);
+          const speed = 1.6 + (state.fanPwm / 100) * 2.8;
+          if (f.side === "front") {
+            x = f.x - 4;
+            y = f.y + 8 + Math.random() * (f.h - 16);
+          } else if (f.side === "rear") {
+            x = f.x + f.w + 4;
+            y = f.y + 8 + Math.random() * (f.h - 16);
+          } else {
+            x = f.x + 8 + Math.random() * (f.w - 16);
+            y = f.y + f.h + 4;
+          }
+          vx = dir.vx * speed + (Math.random() - 0.5) * 0.45;
+          vy = dir.vy * speed + (Math.random() - 0.5) * 0.45;
+        } else {
+          // Ambient air seeping through PCIe vents / gaps under negative pressure
+          isDustLeak = state.exhaustCfm > state.intakeCfm + 12;
+          if (Math.random() < 0.6) {
+            x = CASE.x + 8;
+            y = CASE.y + 220 + Math.random() * 115;
+            vx = 0.7 + Math.random() * 0.7;
+            vy = (Math.random() - 0.5) * 0.4;
+          } else {
+            x = CASE.x + CASE.w - 12;
+            y = CASE.y + 50 + Math.random() * 290;
+            vx = -(0.6 + Math.random() * 0.6);
+            vy = (Math.random() - 0.5) * 0.4;
+          }
+        }
+
+        return {
+          x,
+          y,
+          px: x,
+          py: y,
+          vx,
+          vy,
+          temp: state.ambient + (randomInside ? Math.random() * 16 : 0),
+          life: 0,
+          maxLife: 180 + Math.random() * 220,
+          dust: isDustLeak
+        };
+      }
+
+      function initParticles() {
+        particles.length = 0;
+        for (let i = 0; i < MAX_PARTICLES; i++) {
+          particles.push(spawnParticle(true));
+        }
+      }
+
+      function updateThermodynamics(dt) {
+        const pwmFactor = state.fanPwm / 100;
+        const cfmPerFan = 18 + pwmFactor * 52; // ~28 to 70 CFM per 120mm fan
+        let intakeCount = 0;
+        let exhaustCount = 0;
+        let frontIntake = 0;
+        let topFrontOut = 0;
+
+        for (const f of fans) {
+          if (f.mode === "in") {
+            intakeCount++;
+            if (f.side === "front") frontIntake++;
+          } else if (f.mode === "out") {
+            exhaustCount++;
+            if (f.id === "top-front") topFrontOut = 1;
+          }
+        }
+
+        state.intakeCfm = Math.round(intakeCount * cfmPerFan);
+        state.exhaustCfm = Math.round(exhaustCount * cfmPerFan);
+        const activeFans = intakeCount + exhaustCount;
+
+        // Effective airflow throughput combines intake, exhaust, and directional coherence
+        const minFlow = Math.min(state.intakeCfm, state.exhaustCfm);
+        const maxFlow = Math.max(state.intakeCfm, state.exhaustCfm);
+        // Short-circuit penalty if top-front exhaust immediately steals front-top intake cool air
+        const shortCircuitPenalty = (topFrontOut && frontIntake >= 2) ? 0.92 : 1.0;
+        const effectiveCfm = (minFlow * 0.72 + maxFlow * 0.28 + 14) * shortCircuitPenalty;
+
+        // Acoustic model (logarithmic fan summation)
+        if (activeFans === 0) {
+          state.noiseDba = 20.0;
+        } else {
+          const singleFanDb = 19.5 + Math.pow(pwmFactor, 1.85) * 21.5;
+          state.noiseDba = singleFanDb + 10 * Math.log10(activeFans * 0.65 + 0.35);
+        }
+
+        const totalWatts = state.cpuTdp + state.gpuTdp;
+        // Case internal ambient temperature rise above room temp
+        const targetCaseTemp = state.ambient + (totalWatts / (effectiveCfm * 0.38 + 8.5));
+
+        // Direct cooling bonuses from front mid/top and rear/top-rear fans
+        const cpuCoolBonus =
+          (fans.find((f) => f.id === "front-top").mode === "in" ? 0.14 : 0) +
+          (fans.find((f) => f.id === "rear").mode === "out" ? 0.16 : 0) +
+          (fans.find((f) => f.id === "top-rear").mode === "out" ? 0.12 : 0);
+
+        const gpuCoolBonus =
+          (fans.find((f) => f.id === "front-bot").mode === "in" ? 0.18 : 0) +
+          (fans.find((f) => f.id === "front-mid").mode === "in" ? 0.14 : 0) +
+          (fans.find((f) => f.id === "rear").mode === "out" ? 0.08 : 0);
+
+        const cpuThermalR = 0.255 / (0.62 + pwmFactor * 0.42 + cpuCoolBonus);
+        const gpuThermalR = 0.142 / (0.60 + pwmFactor * 0.40 + gpuCoolBonus);
+
+        // GPU hot exhaust slightly pre-heats CPU air intake
+        const gpuHeatBleed = (state.gpuTdp / 450) * (effectiveCfm < 70 ? 7.5 : 3.2);
+
+        const targetCpuTemp = Math.min(104, targetCaseTemp + state.cpuTdp * cpuThermalR + gpuHeatBleed);
+        const targetGpuTemp = Math.min(98, targetCaseTemp + state.gpuTdp * gpuThermalR);
+
+        const smooth = Math.min(1, dt * 1.9);
+        state.caseTemp += (targetCaseTemp - state.caseTemp) * smooth;
+        state.cpuTemp += (targetCpuTemp - state.cpuTemp) * smooth;
+        state.gpuTemp += (targetGpuTemp - state.gpuTemp) * smooth;
+      }
+
+      function stepParticles(dt) {
+        const pwmScale = 0.45 + (state.fanPwm / 100) * 1.25;
+        const speedNorm = Math.min(1.8, dt * 60);
+
+        for (const f of fans) {
+          if (f.mode !== "off") {
+            const dir = f.mode === "in" ? 1 : -1;
+            f.angle += dir * (0.08 + (state.fanPwm / 100) * 0.28) * speedNorm;
+          }
+        }
+
+        const cpuCx = CPU_BLOCK.x + CPU_BLOCK.w / 2;
+        const cpuCy = CPU_BLOCK.y + CPU_BLOCK.h / 2;
+        const gpuCx = GPU_CARD.x + GPU_CARD.w / 2;
+        const gpuCy = GPU_CARD.y + GPU_CARD.h / 2;
+
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.px = p.x;
+          p.py = p.y;
+          p.life += speedNorm;
+
+          let ax = 0;
+          let ay = 0;
+
+          // Influence from every active fan
+          for (const f of fans) {
+            if (f.mode === "off") continue;
+            const fcx = f.x + f.w / 2;
+            const fcy = f.y + f.h / 2;
+            const dx = p.x - fcx;
+            const dy = p.y - fcy;
+            const distSq = dx * dx + dy * dy + 900;
+            const dist = Math.sqrt(distSq);
+            const dir = getFanVector(f);
+
+            if (f.mode === "in") {
+              // Directional jet push from intake fan
+              const align = (dx * dir.vx + dy * dir.vy) / dist;
+              if (align > -0.25) {
+                const cone = Math.max(0.15, align);
+                const strength = (1250 * pwmScale * cone) / distSq;
+                ax += dir.vx * strength;
+                ay += dir.vy * strength;
+              }
+            } else {
+              // Suction sink toward exhaust fan
+              const pull = (1450 * pwmScale) / distSq;
+              ax += (-dx / dist) * pull + dir.vx * pull * 0.22;
+              ay += (-dy / dist) * pull + dir.vy * pull * 0.22;
+
+              // If particle reaches exhaust fan exit, respawn
+              if (dist < 26) {
+                particles[i] = spawnParticle(false);
+                continue;
+              }
+            }
+          }
+
+          // Thermal buoyancy: warmer air rises naturally
+          const heatExcess = Math.max(0, p.temp - state.ambient);
+          ay -= heatExcess * 0.0022;
+
+          // Subtle organic turbulence
+          ax += (Math.random() - 0.5) * 0.08;
+          ay += (Math.random() - 0.5) * 0.08;
+
+          // GPU shroud obstacle deflection & local GPU fan swirl
+          if (
+            p.x > GPU_CARD.x - 6 &&
+            p.x < GPU_CARD.x + GPU_CARD.w + 6 &&
+            p.y > GPU_CARD.y - 6 &&
+            p.y < GPU_CARD.y + GPU_CARD.h + 6
+          ) {
+            const heatGain = (state.gpuTdp / 450) * 1.95 * speedNorm;
+            p.temp = Math.min(state.gpuTemp + 4, p.temp + heatGain);
+            // GPU blows hot air upward/outward around its backplate
+            ay -= 0.16;
+            ax -= 0.05;
+          } else {
+            const dGpu = Math.hypot((p.x - gpuCx) * 0.55, p.y - gpuCy);
+            if (dGpu < 95) {
+              p.temp += ((95 - dGpu) / 95) * (state.gpuTdp / 450) * 0.55 * speedNorm;
+            }
+          }
+
+          // CPU cooler fin stack heat transfer
+          if (
+            p.x > CPU_BLOCK.x - 8 &&
+            p.x < CPU_BLOCK.x + CPU_BLOCK.w + 8 &&
+            p.y > CPU_BLOCK.y - 8 &&
+            p.y < CPU_BLOCK.y + CPU_BLOCK.h + 8
+          ) {
+            const heatGain = (state.cpuTdp / 280) * 2.1 * speedNorm;
+            p.temp = Math.min(state.cpuTemp + 4, p.temp + heatGain);
+            // CPU tower fan pushes air toward rear exhaust
+            ax -= 0.15 * pwmScale;
+          } else {
+            const dCpu = Math.hypot(p.x - cpuCx, p.y - cpuCy);
+            if (dCpu < 85) {
+              p.temp += ((85 - dCpu) / 85) * (state.cpuTdp / 280) * 0.45 * speedNorm;
+            }
+          }
+
+          // Slow heat dissipation toward case internal temperature
+          p.temp += (state.caseTemp - p.temp) * 0.005 * speedNorm;
+
+          // Integrate velocity with drag
+          p.vx = (p.vx + ax * speedNorm) * 0.965;
+          p.vy = (p.vy + ay * speedNorm) * 0.965;
+
+          // Clamp max velocity
+          const spd = Math.hypot(p.vx, p.vy);
+          const maxSpd = 4.6 * pwmScale;
+          if (spd > maxSpd) {
+            p.vx = (p.vx / spd) * maxSpd;
+            p.vy = (p.vy / spd) * maxSpd;
+          }
+
+          p.x += p.vx * speedNorm;
+          p.y += p.vy * speedNorm;
+
+          // Keep inside case interior walls (above PSU shroud)
+          const leftWall = CASE.x + 16;
+          const rightWall = CASE.x + CASE.w - 16;
+          const topWall = CASE.y + 16;
+          const bottomWall = PSU_SHROUD.y - 4;
+
+          if (p.x < leftWall) {
+            p.x = leftWall;
+            p.vx = Math.abs(p.vx) * 0.45;
+          } else if (p.x > rightWall) {
+            p.x = rightWall;
+            p.vx = -Math.abs(p.vx) * 0.45;
+          }
+          if (p.y < topWall) {
+            p.y = topWall;
+            p.vy = Math.abs(p.vy) * 0.45;
+          } else if (p.y > bottomWall) {
+            p.y = bottomWall;
+            p.vy = -Math.abs(p.vy) * 0.45;
+          }
+
+          if (p.life > p.maxLife) {
+            particles[i] = spawnParticle(false);
+          }
+        }
+      }
+
+      function drawRoundedRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function drawChassisAndComponents() {
+        // Subtle technical grid background
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.045)";
+        ctx.lineWidth = 1;
+        for (let gx = 40; gx < W; gx += 40) {
+          ctx.beginPath();
+          ctx.moveTo(gx, 0);
+          ctx.lineTo(gx, H);
+          ctx.stroke();
+        }
+        for (let gy = 40; gy < H; gy += 40) {
+          ctx.beginPath();
+          ctx.moveTo(0, gy);
+          ctx.lineTo(W, gy);
+          ctx.stroke();
+        }
+
+        // Case feet
+        ctx.fillStyle = "#1e293b";
+        drawRoundedRect(CASE.x + 34, CASE.y + CASE.h - 2, 56, 16, 4);
+        ctx.fill();
+        drawRoundedRect(CASE.x + CASE.w - 90, CASE.y + CASE.h - 2, 56, 16, 4);
+        ctx.fill();
+
+        // Outer PC Chassis
+        drawRoundedRect(CASE.x, CASE.y, CASE.w, CASE.h, 14);
+        ctx.fillStyle = "rgba(11, 18, 33, 0.92)";
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#334155";
+        ctx.stroke();
+
+        // Mesh front panel trim
+        ctx.fillStyle = "rgba(30, 41, 59, 0.9)";
+        drawRoundedRect(CASE.x + CASE.w + 2, CASE.y + 18, 14, CASE.h - 36, 5);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Motherboard PCB
+        drawRoundedRect(MOBO.x, MOBO.y, MOBO.w, MOBO.h, 8);
+        ctx.fillStyle = "#0f172a";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.22)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // VRM heatsinks on motherboard
+        ctx.fillStyle = "#1e293b";
+        drawRoundedRect(MOBO.x + 14, MOBO.y + 14, 24, 118, 4);
+        ctx.fill();
+        drawRoundedRect(MOBO.x + 48, MOBO.y + 12, 165, 22, 4);
+        ctx.fill();
+
+        // RAM sticks with soft cyan edge accent
+        for (let r = 0; r < 4; r++) {
+          const rx = RAM_SLOTS.x + r * 9;
+          ctx.fillStyle = "#1e293b";
+          ctx.fillRect(rx, RAM_SLOTS.y, 6, RAM_SLOTS.h);
+          ctx.fillStyle = r % 2 === 1 ? "rgba(56, 189, 248, 0.55)" : "rgba(100, 116, 139, 0.35)";
+          ctx.fillRect(rx + 1, RAM_SLOTS.y + 4, 4, RAM_SLOTS.h - 8);
+        }
+
+        // PSU shroud
+        drawRoundedRect(PSU_SHROUD.x, PSU_SHROUD.y, PSU_SHROUD.w, PSU_SHROUD.h, 6);
+        ctx.fillStyle = "#0b1222";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // PSU unit label
+        ctx.fillStyle = "#172033";
+        drawRoundedRect(PSU_SHROUD.x + 16, PSU_SHROUD.y + 16, 170, 58, 6);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.16)";
+        ctx.stroke();
+        ctx.fillStyle = "#64748b";
+        ctx.font = "600 11px sans-serif";
+        ctx.fillText("PSU 850W GOLD", PSU_SHROUD.x + 44, PSU_SHROUD.y + 49);
+
+        // Thermal Heatmap Glow (optional)
+        if (state.showHeatmap) {
+          const cpuCx = CPU_BLOCK.x + CPU_BLOCK.w / 2;
+          const cpuCy = CPU_BLOCK.y + CPU_BLOCK.h / 2;
+          const cpuIntensity = Math.max(0.14, Math.min(0.55, (state.cpuTemp - 28) / 110));
+          const cpuGrad = ctx.createRadialGradient(cpuCx, cpuCy, 10, cpuCx, cpuCy, 115);
+          cpuGrad.addColorStop(0, tempToColor(state.cpuTemp, cpuIntensity));
+          cpuGrad.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = cpuGrad;
+          ctx.beginPath();
+          ctx.arc(cpuCx, cpuCy, 115, 0, Math.PI * 2);
+          ctx.fill();
+
+          const gpuCx = GPU_CARD.x + GPU_CARD.w / 2;
+          const gpuCy = GPU_CARD.y + GPU_CARD.h / 2;
+          const gpuIntensity = Math.max(0.14, Math.min(0.55, (state.gpuTemp - 28) / 110));
+          const gpuGrad = ctx.createRadialGradient(gpuCx, gpuCy, 16, gpuCx, gpuCy, 155);
+          gpuGrad.addColorStop(0, tempToColor(state.gpuTemp, gpuIntensity));
+          gpuGrad.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = gpuGrad;
+          ctx.beginPath();
+          ctx.arc(gpuCx, gpuCy, 155, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // CPU Cooler Tower
+        drawRoundedRect(CPU_BLOCK.x, CPU_BLOCK.y, CPU_BLOCK.w, CPU_BLOCK.h, 8);
+        ctx.fillStyle = "#1b263b";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = tempToColor(state.cpuTemp, 0.85);
+        ctx.stroke();
+
+        // CPU fins
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.28)";
+        ctx.lineWidth = 1;
+        for (let fy = CPU_BLOCK.y + 10; fy < CPU_BLOCK.y + CPU_BLOCK.h - 8; fy += 7) {
+          ctx.beginPath();
+          ctx.moveTo(CPU_BLOCK.x + 8, fy);
+          ctx.lineTo(CPU_BLOCK.x + CPU_BLOCK.w - 8, fy);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "#f8fafc";
+        ctx.font = "700 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("CPU", CPU_BLOCK.x + CPU_BLOCK.w / 2, CPU_BLOCK.y + 42);
+        ctx.fillStyle = tempToColor(state.cpuTemp, 1);
+        ctx.font = "700 13px monospace";
+        ctx.fillText(`${state.cpuTemp.toFixed(0)}°C`, CPU_BLOCK.x + CPU_BLOCK.w / 2, CPU_BLOCK.y + 62);
+
+        // GPU Card
+        drawRoundedRect(GPU_CARD.x, GPU_CARD.y, GPU_CARD.w, GPU_CARD.h, 7);
+        ctx.fillStyle = "#182235";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = tempToColor(state.gpuTemp, 0.85);
+        ctx.stroke();
+
+        // GPU backplate & accent line
+        ctx.fillStyle = tempToColor(state.gpuTemp, 0.75);
+        ctx.fillRect(GPU_CARD.x + 12, GPU_CARD.y + 6, GPU_CARD.w - 24, 3);
+
+        ctx.fillStyle = "#f8fafc";
+        ctx.font = "700 12px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("GPU · RTX GRAPHICS", GPU_CARD.x + 18, GPU_CARD.y + 32);
+        ctx.fillStyle = tempToColor(state.gpuTemp, 1);
+        ctx.font = "700 13px monospace";
+        ctx.textAlign = "right";
+        ctx.fillText(`${state.gpuTemp.toFixed(0)}°C  (${state.gpuTdp}W)`, GPU_CARD.x + GPU_CARD.w - 16, GPU_CARD.y + 32);
+        ctx.textAlign = "left";
+
+        // Side Labels outside chassis
+        ctx.fillStyle = "#64748b";
+        ctx.font = "600 11px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("后部 I/O", CASE.x - 36, CASE.y + 138);
+        ctx.fillText("前进风网孔", CASE.x + CASE.w + 50, CASE.y + 215);
+        ctx.fillText("顶部风道槽", CASE.x + 258, CASE.y - 22);
+        ctx.textAlign = "left";
+      }
+
+      function drawParticles() {
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          const fade = Math.min(1, p.life / 16) * Math.min(1, (p.maxLife - p.life) / 28);
+          const alpha = Math.max(0.08, fade * 0.88);
+          const color = p.dust ? `rgba(217, 179, 130, ${alpha * 0.9})` : tempToColor(p.temp, alpha);
+
+          if (state.showTrails) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = p.dust ? 1.8 : 2.1;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(p.px, p.py);
+            ctx.lineTo(p.x + p.vx * 1.4, p.y + p.vy * 1.4);
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.dust ? 2 : 2.3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      function drawFans() {
+        for (const f of fans) {
+          const isHover = state.hoveredFanId === f.id;
+          const color = f.mode === "in" ? "#38bdf8" : f.mode === "out" ? "#fb923c" : "#475569";
+          const fillBg = f.mode === "in"
+            ? "rgba(56, 189, 248, 0.2)"
+            : f.mode === "out"
+              ? "rgba(251, 146, 60, 0.2)"
+              : "rgba(30, 41, 59, 0.72)";
+
+          // Fan housing
+          drawRoundedRect(f.x, f.y, f.w, f.h, 5);
+          ctx.fillStyle = fillBg;
+          ctx.fill();
+          ctx.lineWidth = isHover ? 2.5 : 1.6;
+          ctx.strokeStyle = isHover ? "#f8fafc" : color;
+          ctx.stroke();
+
+          // Animated blade bars inside housing
+          ctx.save();
+          ctx.beginPath();
+          drawRoundedRect(f.x + 2, f.y + 2, f.w - 4, f.h - 4, 3);
+          ctx.clip();
+
+          if (f.mode !== "off") {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            const span = f.w > f.h ? f.w : f.h;
+            const offset = ((f.angle * 10) % 16 + 16) % 16;
+            for (let s = -16; s < span + 16; s += 16) {
+              ctx.beginPath();
+              if (f.w > f.h) {
+                ctx.moveTo(f.x + s + offset, f.y + 3);
+                ctx.lineTo(f.x + s + offset - 6, f.y + f.h - 3);
+              } else {
+                ctx.moveTo(f.x + 3, f.y + s + offset);
+                ctx.lineTo(f.x + f.w - 3, f.y + s + offset - 6);
+              }
+              ctx.stroke();
+            }
+          }
+          ctx.restore();
+
+          // Direction arrow & status badge
+          if (state.showArrows && f.mode !== "off") {
+            const dir = getFanVector(f);
+            const cx = f.x + f.w / 2 + dir.vx * 26;
+            const cy = f.y + f.h / 2 + dir.vy * 26;
+            const tipX = cx + dir.vx * 14;
+            const tipY = cy + dir.vy * 14;
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.moveTo(cx - dir.vx * 10, cy - dir.vy * 10);
+            ctx.lineTo(tipX, tipY);
+            ctx.stroke();
+
+            const ang = Math.atan2(dir.vy, dir.vx);
+            ctx.beginPath();
+            ctx.moveTo(tipX, tipY);
+            ctx.lineTo(tipX - 7 * Math.cos(ang - 0.55), tipY - 7 * Math.sin(ang - 0.55));
+            ctx.lineTo(tipX - 7 * Math.cos(ang + 0.55), tipY - 7 * Math.sin(ang + 0.55));
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          // Mode badge text on hover or always tiny pill
+          ctx.fillStyle = isHover ? "#ffffff" : color;
+          ctx.font = "700 10px monospace";
+          ctx.textAlign = "center";
+          const tagText = f.mode === "in" ? "IN" : f.mode === "out" ? "OUT" : "OFF";
+          if (f.side === "front") {
+            ctx.fillText(tagText, f.x + f.w + 26, f.y + f.h / 2 + 4);
+          } else if (f.side === "rear") {
+            ctx.fillText(tagText, f.x - 18, f.y + f.h / 2 + 4);
+          } else {
+            ctx.fillText(tagText, f.x + f.w / 2, f.y - 8);
+          }
+          ctx.textAlign = "left";
+        }
+      }
+
+      function drawTempChart() {
+        const cw = chartCanvas.width;
+        const ch = chartCanvas.height;
+        chartCtx.clearRect(0, 0, cw, ch);
+
+        // Horizontal guides (40C, 65C, 90C)
+        chartCtx.strokeStyle = "rgba(148, 163, 184, 0.12)";
+        chartCtx.lineWidth = 1;
+        [40, 65, 90].forEach((deg) => {
+          const y = ch - ((deg - 20) / 85) * (ch - 14) - 7;
+          chartCtx.beginPath();
+          chartCtx.moveTo(0, y);
+          chartCtx.lineTo(cw, y);
+          chartCtx.stroke();
+          chartCtx.fillStyle = "rgba(148, 163, 184, 0.55)";
+          chartCtx.font = "10px monospace";
+          chartCtx.fillText(`${deg}°`, 4, y - 2);
+        });
+
+        function plotSeries(arr, strokeColor) {
+          chartCtx.strokeStyle = strokeColor;
+          chartCtx.lineWidth = 2;
+          chartCtx.beginPath();
+          arr.forEach((v, idx) => {
+            const x = 28 + (idx / (arr.length - 1)) * (cw - 34);
+            const y = ch - ((Math.max(20, Math.min(105, v)) - 20) / 85) * (ch - 14) - 7;
+            if (idx === 0) chartCtx.moveTo(x, y);
+            else chartCtx.lineTo(x, y);
+          });
+          chartCtx.stroke();
+        }
+
+        plotSeries(historyCpu, "#38bdf8");
+        plotSeries(historyGpu, "#c084fc");
+
+        // Tiny legend
+        chartCtx.font = "600 10px sans-serif";
+        chartCtx.fillStyle = "#38bdf8";
+        chartCtx.fillText("— CPU", cw - 92, 14);
+        chartCtx.fillStyle = "#c084fc";
+        chartCtx.fillText("— GPU", cw - 46, 14);
+      }
+
+      function syncUiReadouts() {
+        el.cpuTempVal.textContent = `${state.cpuTemp.toFixed(1)}°C`;
+        el.gpuTempVal.textContent = `${state.gpuTemp.toFixed(1)}°C`;
+        el.cpuTempVal.style.color = tempToColor(state.cpuTemp, 1);
+        el.gpuTempVal.style.color = tempToColor(state.gpuTemp, 1);
+
+        const cpuPct = Math.max(8, Math.min(100, ((state.cpuTemp - 20) / 80) * 100));
+        const gpuPct = Math.max(8, Math.min(100, ((state.gpuTemp - 20) / 80) * 100));
+        el.cpuTempBar.style.width = `${cpuPct}%`;
+        el.cpuTempBar.style.backgroundColor = tempToColor(state.cpuTemp, 1);
+        el.gpuTempBar.style.width = `${gpuPct}%`;
+        el.gpuTempBar.style.backgroundColor = tempToColor(state.gpuTemp, 1);
+
+        el.cpuThrottle.classList.toggle("show", state.cpuTemp >= 90);
+        el.gpuThrottle.classList.toggle("show", state.gpuTemp >= 85);
+
+        el.intakeCfmVal.textContent = `${state.intakeCfm} CFM`;
+        el.exhaustCfmVal.textContent = `${state.exhaustCfm} CFM`;
+        el.caseTempVal.textContent = `${state.caseTemp.toFixed(1)}°C`;
+
+        const diff = state.intakeCfm - state.exhaustCfm;
+        el.topCfm.textContent = `${diff >= 0 ? "+" : ""}${diff} CFM`;
+        el.topNoise.textContent = `${state.noiseDba.toFixed(1)} dBA`;
+
+        if (state.intakeCfm === 0 && state.exhaustCfm === 0) {
+          el.topPressure.textContent = "无主动风道";
+          el.pressureDot.style.background = "#f87171";
+          el.pressureVerdict.style.color = "#f87171";
+          el.pressureVerdict.textContent = "被动闷罐模式：热量严重滞留机箱内部，请开启风扇。";
+        } else if (diff > 12) {
+          el.topPressure.textContent = "正压防尘";
+          el.pressureDot.style.background = "#34d399";
+          el.pressureVerdict.style.color = "#34d399";
+          el.pressureVerdict.textContent = "微正压风道：进风大于排风，散热均衡且不易从缝隙吸灰。";
+        } else if (diff < -12) {
+          el.topPressure.textContent = "负压抽风";
+          el.pressureDot.style.background = "#fbbf24";
+          el.pressureVerdict.style.color = "#fbbf24";
+          el.pressureVerdict.textContent = "负压风道：排热直接，但机箱缝隙易吸入未过滤的灰尘（沙色微粒）。";
+        } else {
+          el.topPressure.textContent = "均衡风道";
+          el.pressureDot.style.background = "#38bdf8";
+          el.pressureVerdict.style.color = "#38bdf8";
+          el.pressureVerdict.textContent = "平衡气压：进排风量接近，风道穿透线性顺畅。";
+        }
+      }
+
+      function applyPreset(presetKey) {
+        const preset = PRESETS[presetKey];
+        if (!preset) return;
+        for (const f of fans) {
+          if (preset.modes[f.id]) f.mode = preset.modes[f.id];
+        }
+        state.fanPwm = preset.pwm;
+        el.fanPwmRange.value = preset.pwm;
+        updateSliderLabels();
+        document.querySelectorAll(".preset-btn").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.preset === presetKey);
+        });
+      }
+
+      function updateSliderLabels() {
+        const rpm = Math.round(500 + (state.fanPwm / 100) * 1650);
+        el.cpuTdpLabel.textContent = `${state.cpuTdp} W`;
+        el.gpuTdpLabel.textContent = `${state.gpuTdp} W`;
+        el.fanPwmLabel.textContent = `${state.fanPwm}% (${rpm} RPM)`;
+        el.ambientLabel.textContent = `${state.ambient}°C`;
+      }
+
+      function getCanvasCoords(evt) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: ((evt.clientX - rect.left) / rect.width) * W,
+          y: ((evt.clientY - rect.top) / rect.height) * H
+        };
+      }
+
+      function findFanAt(x, y) {
+        const pad = 10;
+        return fans.find(
+          (f) => x >= f.x - pad && x <= f.x + f.w + pad && y >= f.y - pad && y <= f.y + f.h + pad
+        );
+      }
+
+      canvas.addEventListener("mousemove", (evt) => {
+        const pos = getCanvasCoords(evt);
+        const hit = findFanAt(pos.x, pos.y);
+        state.hoveredFanId = hit ? hit.id : null;
+        canvas.style.cursor = hit ? "pointer" : "default";
+      });
+
+      canvas.addEventListener("click", (evt) => {
+        const pos = getCanvasCoords(evt);
+        const hit = findFanAt(pos.x, pos.y);
+        if (!hit) return;
+        const order = ["in", "out", "off"];
+        hit.mode = order[(order.indexOf(hit.mode) + 1) % order.length];
+        document.querySelectorAll(".preset-btn").forEach((b) => b.classList.remove("active"));
+      });
+
+      document.querySelectorAll(".preset-btn").forEach((btn) => {
+        btn.addEventListener("click", () => applyPreset(btn.dataset.preset));
+      });
+
+      document.querySelectorAll("[data-load]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const cfg = LOADS[btn.dataset.load];
+          if (!cfg) return;
+          state.cpuTdp = cfg.cpu;
+          state.gpuTdp = cfg.gpu;
+          el.cpuTdpRange.value = cfg.cpu;
+          el.gpuTdpRange.value = cfg.gpu;
+          updateSliderLabels();
+          document.querySelectorAll("[data-load]").forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+
+      el.cpuTdpRange.addEventListener("input", (e) => {
+        state.cpuTdp = Number(e.target.value);
+        updateSliderLabels();
+      });
+      el.gpuTdpRange.addEventListener("input", (e) => {
+        state.gpuTdp = Number(e.target.value);
+        updateSliderLabels();
+      });
+      el.fanPwmRange.addEventListener("input", (e) => {
+        state.fanPwm = Number(e.target.value);
+        updateSliderLabels();
+      });
+      el.ambientRange.addEventListener("input", (e) => {
+        state.ambient = Number(e.target.value);
+        updateSliderLabels();
+      });
+
+      el.btnHeatmap.addEventListener("click", () => {
+        state.showHeatmap = !state.showHeatmap;
+        el.btnHeatmap.classList.toggle("active", state.showHeatmap);
+      });
+      el.btnTrails.addEventListener("click", () => {
+        state.showTrails = !state.showTrails;
+        el.btnTrails.classList.toggle("active", state.showTrails);
+      });
+      el.btnArrows.addEventListener("click", () => {
+        state.showArrows = !state.showArrows;
+        el.btnArrows.classList.toggle("active", state.showArrows);
+      });
+      el.btnPause.addEventListener("click", () => {
+        state.paused = !state.paused;
+        el.btnPause.textContent = state.paused ? "继续" : "暂停";
+        el.btnPause.classList.toggle("active", state.paused);
+      });
+
+      function resizeCanvas() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+
+      let lastTs = performance.now();
+      function frame(ts) {
+        const dt = Math.min(0.05, (ts - lastTs) / 1000);
+        lastTs = ts;
+
+        if (!state.paused) {
+          updateThermodynamics(dt);
+          stepParticles(dt);
+
+          chartTick += dt;
+          if (chartTick >= 0.25) {
+            chartTick = 0;
+            historyCpu.push(state.cpuTemp);
+            historyCpu.shift();
+            historyGpu.push(state.gpuTemp);
+            historyGpu.shift();
+            drawTempChart();
+          }
+          syncUiReadouts();
+        }
+
+        ctx.clearRect(0, 0, W, H);
+        drawChassisAndComponents();
+        drawParticles();
+        drawFans();
+
+        requestAnimationFrame(frame);
+      }
+
+      resizeCanvas();
+      updateSliderLabels();
+      initParticles();
+      drawTempChart();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>
